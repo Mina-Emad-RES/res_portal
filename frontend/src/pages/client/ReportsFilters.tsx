@@ -40,8 +40,8 @@ export default function ReportsFilters({
   );
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return dateStr;
-    return new Date(dateStr).toLocaleDateString();
+    const [year, month, day] = dateStr.slice(0, 10).split("-");
+    return `${month}/${day}/${year}`;
   };
 
   const dateCollection = useMemo(

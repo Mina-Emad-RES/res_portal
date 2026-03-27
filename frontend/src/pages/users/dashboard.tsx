@@ -106,6 +106,10 @@ const Dashboard = () => {
         return null;
     }
   };
+  const formatReportDate = (value: string) => {
+    const [year, month, day] = value.slice(0, 10).split("-");
+    return `${month}/${day}/${year}`;
+  };
 
   if (loading) {
     return (
@@ -261,7 +265,7 @@ const Dashboard = () => {
                           </Table.Cell>
 
                           <Table.Cell whiteSpace="nowrap">
-                            {new Date(report.reportDate).toLocaleDateString()}
+                            {formatReportDate(report.reportDate)}
                           </Table.Cell>
 
                           <Table.Cell whiteSpace="nowrap">
