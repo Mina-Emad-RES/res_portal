@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Report" ALTER COLUMN "reportDate" SET DATA TYPE TIMESTAMP(3);

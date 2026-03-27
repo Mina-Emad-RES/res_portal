@@ -1,0 +1,19 @@
+# Root secrets
+.env
+
+# Docker
+docker-compose.override.yml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node (shared)
+node_modules/
+
+# Build artifacts
+dist/
+build/
