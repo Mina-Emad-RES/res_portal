@@ -17,6 +17,11 @@ export default function ReportsHero({
   hasAudit,
   hasDM,
 }: ReportsHeroProps) {
+  const formatReportDate = (value: string) => {
+    const [year, month, day] = value.slice(0, 10).split("-");
+    return `${month}/${day}/${year}`;
+  };
+
   return (
     <Card.Root
       variant="outline"
@@ -64,7 +69,7 @@ export default function ReportsHero({
 
             {selectedDate ? (
               <Badge variant="outline" rounded="full" px="3" py="1.5">
-                {new Date(selectedDate).toLocaleDateString()}
+                {formatReportDate(selectedDate)}
               </Badge>
             ) : null}
 
