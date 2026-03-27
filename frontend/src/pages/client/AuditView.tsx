@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Box,
-  Card,
-  Flex,
-  Heading,
-  Table,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Badge, Box, Card, Flex, Table, Text, VStack } from "@chakra-ui/react";
 import { auditSections } from "./report-config";
 import type { ReportContent } from "./report-types";
 

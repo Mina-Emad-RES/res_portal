@@ -87,7 +87,7 @@ const TourTooltip = ({
         bg="bg.subtle"
       >
         <HStack gap={2}>
-          {!isLastStep && (
+          {!isLastStep && skipProps && (
             <Button
               {...skipProps}
               variant="ghost"
@@ -221,16 +221,17 @@ export default function Home() {
         run={runTour}
         continuous
         scrollToFirstStep
-        showProgress
-        showSkipButton
-        disableOverlayClose
         onEvent={handleJoyrideEvent}
         tooltipComponent={TourTooltip}
+        options={{
+          zIndex: 10000,
+          buttons: ["back", "primary"],
+        }}
         locale={{
           back: "Back",
           last: "Finish",
           next: "Next",
-          nextLabelWithProgress: "Next",
+          nextWithProgress: "Next {current}/{total}",
           skip: "Skip Tour",
         }}
         styles={{
@@ -245,9 +246,6 @@ export default function Home() {
           },
           overlay: {
             backgroundColor: "rgba(11, 18, 32, 0.55)",
-          },
-          spotlight: {
-            borderRadius: 18,
           },
           beacon: {
             zIndex: 10000,

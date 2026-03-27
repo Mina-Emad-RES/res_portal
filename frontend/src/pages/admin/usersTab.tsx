@@ -102,8 +102,8 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
       });
 
       const filteredUsers = roleFilter
-        ? sortedUsers.filter((u) => u.role === roleFilter)
-        : sortedUsers.filter((u) => u.role !== "CLIENT");
+        ? sortedUsers.filter((u: User) => u.role === roleFilter)
+        : sortedUsers.filter((u: User) => u.role !== "CLIENT");
 
       setUsers(filteredUsers);
     } catch (err) {
