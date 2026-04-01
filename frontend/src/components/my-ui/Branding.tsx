@@ -11,7 +11,7 @@ export const Branding = () => {
         <Text as="span">-VA</Text>
       </Heading>
       <Text fontSize="2xl" color={useColorModeValue("gray.600", "gray.400")}>
-        Quality Records App
+        RES-VA Clients Portal
       </Text>
     </Center>
   );
