@@ -1,18 +1,14 @@
-import { Center, Heading, Text } from "@chakra-ui/react";
-import { useColorModeValue } from "../ui/color-mode";
+import { Center, Image } from "@chakra-ui/react";
 
 export const Branding = () => {
   return (
-    <Center flexDirection="column" pt={40} mb={4} gap={6}>
-      <Heading fontSize="6xl">
-        <Text as="span" color="blue.500">
-          RES
-        </Text>
-        <Text as="span">-VA</Text>
-      </Heading>
-      <Text fontSize="2xl" color={useColorModeValue("gray.600", "gray.400")}>
-        RES-VA Clients Portal
-      </Text>
+    <Center flexDirection="column" pt={20} mb={4} gap={6}>
+      <Image
+        src="/logo-color.png"
+        alt="RES-VA Logo"
+        maxW={{ base: "160px", md: "220px" }}
+        objectFit="contain"
+      />
     </Center>
   );
 };

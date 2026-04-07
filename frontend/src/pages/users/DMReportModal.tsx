@@ -218,18 +218,6 @@ const ActionSection = ({
               Add and manage actions related to this section.
             </Text>
           </Box>
-
-          <Button
-            variant="outline"
-            colorPalette="brand"
-            rounded="xl"
-            onClick={() => addAction(sectionKey)}
-          >
-            <HStack gap={2}>
-              <Plus size={16} />
-              <span>Add Action</span>
-            </HStack>
-          </Button>
         </Flex>
 
         <VStack align="stretch" gap={3}>
@@ -284,6 +272,20 @@ const ActionSection = ({
             </Box>
           ))}
         </VStack>
+        <Button
+          mt={3}
+          variant="outline"
+          colorPalette="brand"
+          rounded="xl"
+          onClick={() => addAction(sectionKey)}
+          alignSelf="flex-start"
+          w="full"
+        >
+          <HStack gap={2}>
+            <Plus size={16} />
+            <span>Add Action</span>
+          </HStack>
+        </Button>
       </Box>
     </VStack>
   );
@@ -404,7 +406,22 @@ const DMReportModal = ({
     }
   };
 
-  const isLastTab = activeTab === sections[sections.length - 1].key;
+  // const isLastTab = activeTab === sections[sections.length - 1].key;
+  const currentIndex = sections.findIndex((s) => s.key === activeTab);
+  const isFirstTab = currentIndex === 0;
+  const isLastTab = currentIndex === sections.length - 1;
+
+  const goNext = () => {
+    if (currentIndex < sections.length - 1) {
+      setActiveTab(sections[currentIndex + 1].key);
+    }
+  };
+
+  const goBack = () => {
+    if (currentIndex > 0) {
+      setActiveTab(sections[currentIndex - 1].key);
+    }
+  };
 
   return (
     <Dialog.Root
@@ -520,22 +537,37 @@ const DMReportModal = ({
               </Tabs.Root>
             </Dialog.Body>
 
-            {isLastTab && (
-              <Dialog.Footer
-                px={{ base: 5, md: 6 }}
-                pb={{ base: 5, md: 6 }}
-                pt={0}
-              >
+            <Dialog.Footer
+              px={{ base: 5, md: 6 }}
+              pb={{ base: 5, md: 6 }}
+              pt={0}
+            >
+              <Flex w="full" justify="space-between">
                 <Button
-                  colorPalette="brand"
+                  variant="ghost"
                   rounded="xl"
-                  onClick={handleSubmit}
-                  loading={loading}
+                  onClick={goBack}
+                  disabled={isFirstTab}
                 >
-                  {baseData.id ? "Update Report" : "Create Report"}
+                  Back
                 </Button>
-              </Dialog.Footer>
-            )}
+
+                {isLastTab ? (
+                  <Button
+                    colorPalette="brand"
+                    rounded="xl"
+                    onClick={handleSubmit}
+                    loading={loading}
+                  >
+                    {baseData.id ? "Update Report" : "Create Report"}
+                  </Button>
+                ) : (
+                  <Button colorPalette="brand" rounded="xl" onClick={goNext}>
+                    Next
+                  </Button>
+                )}
+              </Flex>
+            </Dialog.Footer>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>

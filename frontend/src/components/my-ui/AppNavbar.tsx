@@ -7,6 +7,7 @@ import {
   Portal,
   Text,
   VStack,
+  Image,
 } from "@chakra-ui/react";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
@@ -35,21 +36,15 @@ export const AppNavbar = () => {
         <Box
           cursor="pointer"
           onClick={() => navigate("/")}
-          _hover={{ opacity: 0.9 }}
+          _hover={{ opacity: 0.7 }}
           transition="opacity 0.2s ease"
         >
-          <Text
-            fontSize={{ base: "2xl", md: "3xl" }}
-            fontWeight="bold"
-            letterSpacing="-0.02em"
-          >
-            <Text as="span" color="brand.solid">
-              RES
-            </Text>
-            <Text as="span" color="fg">
-              -VA
-            </Text>
-          </Text>
+          <Image
+            src="/logo-color.png"
+            alt="RES-VA Logo"
+            maxW={{ base: "70px", md: "90px" }}
+            objectFit="contain"
+          />
         </Box>
 
         <HStack gap={3}>
@@ -100,6 +95,16 @@ export const AppNavbar = () => {
                 >
                   {user?.role === "ADMIN" && (
                     <>
+                      <Menu.Item
+                        cursor="pointer"
+                        rounded="lg"
+                        value="home"
+                        _hover={{ bg: "bg.hover" }}
+                        onClick={() => navigate("/")}
+                      >
+                        Home
+                      </Menu.Item>
+
                       <Menu.Item
                         cursor="pointer"
                         rounded="lg"
