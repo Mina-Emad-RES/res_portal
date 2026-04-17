@@ -68,7 +68,6 @@ export class UsersService {
     return await this.databaseService.user.findMany({
       where: {
         role: Role.CLIENT,
-        isActive: true,
       },
       select: {
         id: true,
