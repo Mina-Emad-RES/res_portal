@@ -170,7 +170,7 @@ export class UsersService {
       where: { id: userId },
       data: {
         passwordSetupToken: tokenHash,
-        passwordSetupExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        passwordSetupExpires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
       select: {
         id: true,
