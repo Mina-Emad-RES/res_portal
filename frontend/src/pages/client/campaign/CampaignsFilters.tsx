@@ -11,6 +11,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { parseDate } from "@internationalized/date";
 import { LuCalendar, LuChevronDown } from "react-icons/lu";
 import SearchableSelect from "../../../components/my-ui/SearchableSelect";
 import type React from "react";
@@ -38,14 +39,18 @@ const presets: { id: string; value: PresetTriggerValue; label: string }[] = [
   { id: "lastYear", value: "lastYear", label: "Last year" },
 ];
 
+const formatDateValue = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 const toDatePickerValue = (date: Date | null) => {
   if (!date) return null;
 
-  return {
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    day: date.getDate(),
-  };
+  return parseDate(formatDateValue(date));
 };
 
 const fromDatePickerValue = (value: any): Date | null => {
@@ -58,8 +63,6 @@ const fromDatePickerValue = (value: any): Date | null => {
   ) {
     return new Date(value.year, value.month - 1, value.day);
   }
-
-  if (value instanceof Date) return value;
 
   return null;
 };
@@ -75,7 +78,7 @@ export default function CampaignsFilters({
   const datePickerValue = [
     toDatePickerValue(dateRange[0]),
     toDatePickerValue(dateRange[1]),
-  ].filter(Boolean);
+  ].filter((date): date is NonNullable<typeof date> => Boolean(date));
 
   const handleValueChange = (details: { value: any[] }) => {
     onDateChange([
@@ -133,7 +136,7 @@ export default function CampaignsFilters({
           unmountOnExit
           selectionMode="range"
           defaultView="day"
-          value={datePickerValue as any}
+          value={datePickerValue}
           onValueChange={handleValueChange}
         >
           <DatePicker.Control>

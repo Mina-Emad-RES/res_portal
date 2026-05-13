@@ -117,9 +117,7 @@ export function useCampaignData() {
 
   // Effective campaign: admin gets URL value (or auto-select first option),
   // non-admin always uses their own username regardless of URL.
-  const effectiveCampaign = isAdmin
-    ? urlCampaign || clientOptions[0]?.value || ""
-    : (user?.username ?? "");
+  const effectiveCampaign = isAdmin ? urlCampaign : (user?.username ?? "");
 
   const start = parseDate(startStr);
   const end = parseDate(endStr);
