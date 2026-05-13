@@ -80,8 +80,9 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
   });
 
   const users = useMemo(() => {
-    if (!usersQuery.data) return [];
-    const sorted = [...usersQuery.data].sort((a, b) => {
+    const data = usersQuery.data;
+    if (!Array.isArray(data)) return [];
+    const sorted = [...data].sort((a, b) => {
       if (a.role === b.role) return a.username.localeCompare(b.username);
       return ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role);
     });

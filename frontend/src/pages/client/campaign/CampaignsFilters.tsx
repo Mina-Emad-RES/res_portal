@@ -13,7 +13,12 @@ import {
 } from "@chakra-ui/react";
 import { LuCalendar, LuChevronDown } from "react-icons/lu";
 import SearchableSelect from "../../../components/my-ui/SearchableSelect";
+import type React from "react";
 import type { SelectOption } from "./useCampaignData";
+
+type PresetTriggerValue = React.ComponentProps<
+  typeof DatePicker.PresetTrigger
+>["value"];
 
 type CampaignsFiltersProps = {
   showCampaignFilter: boolean;
@@ -23,6 +28,15 @@ type CampaignsFiltersProps = {
   dateRange: [Date | null, Date | null];
   onDateChange: (dates: [Date | null, Date | null]) => void;
 };
+
+const presets: { value: PresetTriggerValue; label: string }[] = [
+  { value: "last7Days", label: "Last 7 days" },
+  { value: "last30Days", label: "Last 30 days" },
+  { value: "thisMonth", label: "This month" },
+  { value: "lastMonth", label: "Last month" },
+  { value: "thisYear", label: "This year" },
+  { value: "lastYear", label: "Last year" },
+];
 
 export default function CampaignsFilters({
   showCampaignFilter,
@@ -55,7 +69,6 @@ export default function CampaignsFilters({
       }}
       gap={4}
     >
-      {/* Campaign selector — admin only */}
       {showCampaignFilter && (
         <Box>
           <Text
@@ -79,7 +92,6 @@ export default function CampaignsFilters({
         </Box>
       )}
 
-      {/* Date range picker */}
       <Box>
         <Text
           fontWeight="medium"
@@ -199,14 +211,7 @@ export default function CampaignsFilters({
                     >
                       Quick select
                     </Text>
-                    {[
-                      { value: "last7Days", label: "Last 7 days" },
-                      { value: "last30Days", label: "Last 30 days" },
-                      { value: "thisMonth", label: "This month" },
-                      { value: "lastMonth", label: "Last month" },
-                      { value: "thisYear", label: "This year" },
-                      { value: "lastYear", label: "Last year" },
-                    ].map(({ value, label }) => (
+                    {presets.map(({ value, label }) => (
                       <DatePicker.PresetTrigger
                         key={value}
                         value={value}

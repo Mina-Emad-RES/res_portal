@@ -217,7 +217,7 @@ export default function CampaignGraph({ logs }: Props) {
             {visibleSeries.map((item) => (
               <Area
                 key={item.name}
-                dataKey={chart.key(item.name)}
+                dataKey={chart.key(item.name as keyof CallLogEntry)}
                 name={item.label}
                 stroke={item.resolvedColor}
                 fill={item.resolvedColor}
