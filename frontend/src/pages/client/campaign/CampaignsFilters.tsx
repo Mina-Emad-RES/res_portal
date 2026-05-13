@@ -38,27 +38,50 @@ const presets: { id: string; value: PresetTriggerValue; label: string }[] = [
   { id: "lastYear", value: "lastYear", label: "Last year" },
 ];
 
+const toDatePickerValue = (date: Date | null) => {
+  if (!date) return null;
+
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+  };
+};
+
+const fromDatePickerValue = (value: any): Date | null => {
+  if (!value) return null;
+
+  if (
+    typeof value.year === "number" &&
+    typeof value.month === "number" &&
+    typeof value.day === "number"
+  ) {
+    return new Date(value.year, value.month - 1, value.day);
+  }
+
+  if (value instanceof Date) return value;
+
+  return null;
+};
+
 export default function CampaignsFilters({
   showCampaignFilter,
   campaignOptions,
   selectedCampaign,
   onCampaignChange,
+  dateRange,
   onDateChange,
 }: CampaignsFiltersProps) {
-  const handleValueChange = (e: { value: any[] }) => {
-    const toDate = (v: any): Date | null => {
-      if (!v) return null;
-      if (
-        typeof v.year === "number" &&
-        typeof v.month === "number" &&
-        typeof v.day === "number"
-      ) {
-        return new Date(v.year, v.month - 1, v.day);
-      }
-      if (v instanceof Date) return v;
-      return null;
-    };
-    onDateChange([toDate(e.value[0]), toDate(e.value[1])]);
+  const datePickerValue = [
+    toDatePickerValue(dateRange[0]),
+    toDatePickerValue(dateRange[1]),
+  ].filter(Boolean);
+
+  const handleValueChange = (details: { value: any[] }) => {
+    onDateChange([
+      fromDatePickerValue(details.value[0]),
+      fromDatePickerValue(details.value[1]),
+    ]);
   };
 
   return (
@@ -81,11 +104,12 @@ export default function CampaignsFilters({
           >
             Select Campaign
           </Text>
+
           <SearchableSelect
             options={campaignOptions}
-            value={selectedCampaign}
+            value={selectedCampaign || ""}
             onChange={onCampaignChange}
-            placeholder="Search campaign..."
+            placeholder="All campaigns"
             emptyText="No campaigns found"
             size="lg"
           />
@@ -105,11 +129,11 @@ export default function CampaignsFilters({
         </Text>
 
         <DatePicker.Root
-          key={selectedCampaign}
           lazyMount
           unmountOnExit
           selectionMode="range"
           defaultView="day"
+          value={datePickerValue as any}
           onValueChange={handleValueChange}
         >
           <DatePicker.Control>
@@ -137,6 +161,7 @@ export default function CampaignsFilters({
                 <Icon color="fg.muted" boxSize={4}>
                   <LuCalendar />
                 </Icon>
+
                 <Flex flex="1" align="center" gap={1.5} overflow="hidden">
                   <DatePicker.Input
                     index={0}
@@ -153,9 +178,11 @@ export default function CampaignsFilters({
                       minWidth: 0,
                     }}
                   />
+
                   <Text fontSize="sm" color="fg.muted" flexShrink={0}>
                     →
                   </Text>
+
                   <DatePicker.Input
                     index={1}
                     placeholder="End date"
@@ -172,6 +199,7 @@ export default function CampaignsFilters({
                     }}
                   />
                 </Flex>
+
                 <Icon color="fg.muted" boxSize={3.5} flexShrink={0}>
                   <LuChevronDown />
                 </Icon>
@@ -211,6 +239,7 @@ export default function CampaignsFilters({
                     >
                       Quick select
                     </Text>
+
                     {presets.map(({ id, value, label }) => (
                       <DatePicker.PresetTrigger key={id} value={value} asChild>
                         <Button
@@ -237,10 +266,12 @@ export default function CampaignsFilters({
                       <DatePicker.Header />
                       <DatePicker.DayTable />
                     </DatePicker.View>
+
                     <DatePicker.View view="month">
                       <DatePicker.Header />
                       <DatePicker.MonthTable />
                     </DatePicker.View>
+
                     <DatePicker.View view="year">
                       <DatePicker.Header />
                       <DatePicker.MonthTable />
