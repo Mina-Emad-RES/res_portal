@@ -26,6 +26,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      REPORTING_APP_USERNAME: ${REPORTING_APP_USERNAME}
+      REPORTING_APP_PASSWORD: ${REPORTING_APP_PASSWORD}
 
     command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
     depends_on:
