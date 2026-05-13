@@ -199,11 +199,10 @@ export function useCampaignData() {
 
   const handleDateChange = (dates: [Date | null, Date | null]) => {
     const [s, e] = dates;
-    if (s && e) {
-      updateParams({ start: formatDate(s), end: formatDate(e) });
-    } else {
-      updateParams({ start: null, end: null });
-    }
+    updateParams({
+      start: s ? formatDate(s) : null,
+      end: e ? formatDate(e) : null,
+    });
   };
 
   const selectedCampaignLabel =
