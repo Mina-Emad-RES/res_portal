@@ -36,10 +36,15 @@ export class UsersController {
     return this.usersService.findClients();
   }
 
+  @Get('report-creators')
+  @Roles(Role.ADMIN, Role.AUDITOR, Role.DM, Role.CLIENT)
+  getReportCreators(@Req() req: AuthRequest) {
+    return this.usersService.findReportCreators(req.user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Req() req: AuthRequest) {
-    const user = req.user;
-    return this.usersService.findOne(id, user);
+    return this.usersService.findOne(id, req.user);
   }
 
   @Patch(':id')

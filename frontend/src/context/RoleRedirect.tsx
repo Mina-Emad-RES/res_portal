@@ -1,7 +1,5 @@
-// RoleRedirect.tsx
-
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "./useAuth"; // adjust path
+import { useAuth } from "./useAuth";
 
 export const RoleRedirect = () => {
   const { user, loading } = useAuth();
@@ -12,7 +10,7 @@ export const RoleRedirect = () => {
   if (!user) return <Navigate to="/login" replace />;
 
   if (user.role === "CLIENT") {
-    return <Navigate to="/home" replace state={location.state} />;
+    return <Navigate to="/reports" replace state={location.state} />;
   }
 
   return <Navigate to="/dashboard" replace />;

@@ -1,13 +1,13 @@
 import { Box } from "@chakra-ui/react";
+import { Outlet } from "react-router-dom";
 import { AppNavbar } from "../my-ui/AppNavbar";
-import type { ReactNode } from "react";
 
-export const AppLayout = ({ children }: { children: ReactNode }) => {
+export const AppLayout = () => {
   return (
     <>
       <AppNavbar />
       <Box as="main" p={6}>
-        {children}
+        <Outlet />
       </Box>
     </>
   );

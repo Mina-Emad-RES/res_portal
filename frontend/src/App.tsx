@@ -10,7 +10,8 @@ import { AdminPanel } from "./pages/admin/adminPanel";
 import { SetPassword } from "./pages/auth/setPassword";
 import { RequireAuth } from "./context/RequireAuth";
 import { RequireAdmin } from "./context/RequireAdmin";
-import Home from "./pages/client/home";
+import Home from "./pages/client/reports/home";
+import Campaign from "./pages/client/campaign/campaign";
 import { RoleRedirect } from "./context/RoleRedirect";
 import { RequireClient } from "./context/RequireClient";
 import { RequireStaff } from "./context/RequireStaff";
@@ -51,7 +52,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/set-password" element={<SetPassword />} />
 
-        {/* Protected */}
+        {/* Root — pure redirect, no layout */}
         <Route
           path="/"
           element={
@@ -61,44 +62,52 @@ function App() {
           }
         />
 
+        {/* Protected pages — share a single AppLayout instance, which means
+            the navbar stays mounted as you navigate between these routes
+            (so its lastParamsRef survives). */}
         <Route
-          path="/dashboard"
           element={
             <RequireAuth>
+              <AppLayout />
+            </RequireAuth>
+          }
+        >
+          <Route
+            path="/dashboard"
+            element={
               <RequireStaff>
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
+                <Dashboard />
               </RequireStaff>
-            </RequireAuth>
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/home"
-          element={
-            <RequireAuth>
+          <Route
+            path="/reports"
+            element={
               <RequireClient>
-                <AppLayout>
-                  <Home />
-                </AppLayout>
+                <Home />
               </RequireClient>
-            </RequireAuth>
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <RequireAuth>
+          <Route
+            path="/campaign"
+            element={
+              <RequireClient>
+                <Campaign />
+              </RequireClient>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
               <RequireAdmin>
-                <AppLayout>
-                  <AdminPanel />
-                </AppLayout>
+                <AdminPanel />
               </RequireAdmin>
-            </RequireAuth>
-          }
-        />
+            }
+          />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

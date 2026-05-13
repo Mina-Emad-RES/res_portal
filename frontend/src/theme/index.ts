@@ -1,6 +1,11 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
 const config = defineConfig({
+  globalCss: {
+    html: {
+      colorPalette: "blue",
+    },
+  },
   theme: {
     tokens: {
       colors: {
@@ -27,6 +32,12 @@ const config = defineConfig({
             value: {
               base: "#f6f8fb",
               _dark: "#0b1220",
+            },
+          },
+          emphasized: {
+            value: {
+              base: "#ffffff",
+              _dark: "#1d2c4d",
             },
           },
           panel: {

@@ -8,7 +8,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from '../database/database.service';
 import { JwtPayload } from '../auth/jwt-payload.interface';
-// import { Role } from '../../generated/prisma';
 import { Prisma, Role } from '@prisma/client';
 import {
   handlePrismaNotFound,
@@ -71,7 +70,33 @@ export class UsersService {
       },
       select: {
         id: true,
-        username: true, // only expose these two
+        username: true,
+      },
+      orderBy: {
+        username: 'asc',
+      },
+    });
+  }
+
+  async findReportCreators(requester: JwtPayload) {
+    // AUDITOR sees auditors + admins (admins can create any report type)
+    // DM sees DMs + admins
+    // ADMIN and CLIENT see everyone who can create reports
+    let creatorRoles: Role[];
+    if (requester.role === Role.AUDITOR) {
+      creatorRoles = [Role.ADMIN, Role.AUDITOR];
+    } else if (requester.role === Role.DM) {
+      creatorRoles = [Role.ADMIN, Role.DM];
+    } else {
+      creatorRoles = [Role.ADMIN, Role.AUDITOR, Role.DM];
+    }
+
+    return await this.databaseService.user.findMany({
+      where: { role: { in: creatorRoles } },
+      select: {
+        id: true,
+        username: true,
+        role: true,
       },
       orderBy: {
         username: 'asc',
@@ -132,7 +157,6 @@ export class UsersService {
       }
 
       handlePrismaNotFound(error, 'User not found');
-      throw error;
     }
   }
 

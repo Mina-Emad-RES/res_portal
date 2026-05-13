@@ -9,7 +9,8 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { useMemo } from "react";
-import InfoPopover from "../../components/my-ui/InfoPopover";
+import InfoPopover from "../../../components/my-ui/InfoPopover";
+import SearchableSelect from "../../../components/my-ui/SearchableSelect";
 import type { SelectOption } from "./report-types";
 
 type ReportsFiltersProps = {
@@ -20,6 +21,8 @@ type ReportsFiltersProps = {
   dateOptions: SelectOption[];
   selectedDate: string;
   onDateChange: (value: string) => void;
+  loadingDates?: boolean;
+  dateDisabled?: boolean;
 };
 
 export default function ReportsFilters({
@@ -30,15 +33,9 @@ export default function ReportsFilters({
   dateOptions,
   selectedDate,
   onDateChange,
+  loadingDates = false,
+  dateDisabled = false,
 }: ReportsFiltersProps) {
-  const clientCollection = useMemo(
-    () =>
-      createListCollection({
-        items: clientOptions,
-      }),
-    [clientOptions],
-  );
-
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.slice(0, 10).split("-");
     return `${month}/${day}/${year}`;
@@ -55,6 +52,12 @@ export default function ReportsFilters({
     [dateOptions],
   );
 
+  const datePlaceholder = loadingDates
+    ? "Loading dates..."
+    : dateDisabled
+      ? "Select a client first"
+      : "Select date";
+
   return (
     <Grid
       templateColumns={{
@@ -64,93 +67,50 @@ export default function ReportsFilters({
       gap={4}
     >
       {showClientFilter && (
-        <Select.Root
-          collection={clientCollection}
-          multiple={false}
-          size="lg"
-          variant="subtle"
-          value={selectedClientId ? [selectedClientId] : []}
-          onValueChange={(details) => {
-            onClientChange(details.value[0] ?? "");
-          }}
-        >
-          <Select.HiddenSelect />
-
-          <Select.Label
+        <Box>
+          <Text
             fontWeight="medium"
             color="fg.subtle"
             mb={2}
-            height="40px"
+            h="40px"
+            display="flex"
+            alignItems="center"
           >
             Select Client
-          </Select.Label>
-
-          <Select.Control>
-            <Select.Trigger
-              rounded="xl"
-              bg="bg.subtle"
-              borderWidth="1px"
-              borderColor="border"
-              transition="background 0.2s ease, border-color 0.2s ease"
-              _hover={{
-                bg: "bg.hover",
-                borderColor: "border.emphasized",
-              }}
-              _focusVisible={{
-                borderColor: "brand.solid",
-              }}
-            >
-              <Select.ValueText placeholder="Select client" />
-            </Select.Trigger>
-
-            <Select.IndicatorGroup color="fg.muted">
-              <Select.Indicator />
-            </Select.IndicatorGroup>
-          </Select.Control>
-
-          <Select.Positioner>
-            <Select.Content
-              rounded="xl"
-              bg="bg.panel"
-              borderColor="border.emphasized"
-              shadow="lg"
-            >
-              {clientCollection.items.map((item) => (
-                <Select.Item key={item.value} item={item}>
-                  {item.label}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Positioner>
-        </Select.Root>
+          </Text>
+          <SearchableSelect
+            options={clientOptions}
+            value={selectedClientId}
+            onChange={onClientChange}
+            placeholder="Search client..."
+            emptyText="No clients found"
+            size="lg"
+          />
+        </Box>
       )}
 
       <Box className="tour-date-filter">
+        <HStack mb={2} h="40px" align="center" gap={2}>
+          <Text fontWeight="medium" color="fg.subtle">
+            Select Date
+          </Text>
+          <Box as="span" className="tour-info-popover">
+            <InfoPopover content="Reports usually include data from 2 weeks prior to the selected date." />
+          </Box>
+        </HStack>
+
         <Select.Root
           collection={dateCollection}
           multiple={false}
           size="lg"
           variant="subtle"
           value={selectedDate ? [selectedDate] : []}
+          disabled={dateDisabled || loadingDates}
           onValueChange={(details) => {
             onDateChange(details.value[0] ?? "");
           }}
         >
           <Select.HiddenSelect />
-
-          <Select.Label
-            fontWeight="medium"
-            color="fg.subtle"
-            mb={2}
-            height="40px"
-          >
-            <HStack gap={2}>
-              <Text>Select Date</Text>
-              <Box as="span" className="tour-info-popover">
-                <InfoPopover content="This report includes data from the 2 weeks prior to the selected date." />
-              </Box>
-            </HStack>
-          </Select.Label>
 
           <Select.Control>
             <Select.Trigger
@@ -167,7 +127,7 @@ export default function ReportsFilters({
                 borderColor: "brand.solid",
               }}
             >
-              <Select.ValueText placeholder="Select date" />
+              <Select.ValueText placeholder={datePlaceholder} />
             </Select.Trigger>
 
             <Select.IndicatorGroup color="fg.muted">

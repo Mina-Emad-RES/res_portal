@@ -3,14 +3,17 @@ import { AuthContext } from "./AuthContext";
 import type { ReactNode } from "react";
 import type { User } from "../types/auth";
 import { AUTH_LOGOUT_EVENT } from "../api/authEvents";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../api/axios";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = useQueryClient();
+
   const storedToken = localStorage.getItem("token");
   const storedUser = localStorage.getItem("user");
 
   const [user, setUser] = useState<User | null>(
-    storedUser ? JSON.parse(storedUser) : null
+    storedUser ? JSON.parse(storedUser) : null,
   );
   const [token, setToken] = useState<string | null>(storedToken);
 
@@ -28,6 +31,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    // Wipe all cached query data so the next user doesn't briefly see the
+    // previous user's data on screen.
+    queryClient.clear();
   };
 
   useEffect(() => {

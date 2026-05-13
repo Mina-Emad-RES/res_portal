@@ -11,7 +11,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { useAuth } from "../../context/useAuth";
+import { useAuth } from "../../../context/useAuth";
 import AuditView from "./AuditView";
 import DMView from "./DMView";
 import EmptyMessage from "./EmptyMessage";
@@ -178,6 +178,8 @@ export default function Home() {
 
   const {
     loading,
+    loadingDates,
+    loadingReport,
     selectedDate,
     selectedClientId,
     selectedClientLabel,
@@ -213,6 +215,15 @@ export default function Home() {
       </Flex>
     );
   }
+
+  // Content-area state derivation
+  const isAdmin = user?.role === "ADMIN";
+  const needsClient = isAdmin && !selectedClientId;
+  const noDatesAvailable = !needsClient && !loadingDates && dates.length === 0;
+  const needsDate =
+    !needsClient && !loadingDates && dates.length > 0 && !selectedDate;
+  const showLoadingReport = !!selectedDate && loadingReport;
+  const showReport = !!selectedDate && !loadingReport;
 
   return (
     <>
@@ -281,24 +292,50 @@ export default function Home() {
               >
                 <Card.Body p={{ base: 4, md: 5 }}>
                   <ReportsFilters
-                    showClientFilter={user?.role === "ADMIN"}
+                    showClientFilter={isAdmin}
                     clientOptions={clientOptions}
                     selectedClientId={selectedClientId}
                     onClientChange={handleClientChange}
                     dateOptions={dateOptions}
                     selectedDate={selectedDate}
                     onDateChange={handleDateChange}
+                    loadingDates={loadingDates}
+                    dateDisabled={needsClient}
                   />
                 </Card.Body>
               </Card.Root>
             </Box>
 
-            {!dates.length ? (
+            {needsClient ? (
+              <EmptyMessage
+                title="Select a client"
+                description="Choose a client from the dropdown to view their available reports."
+              />
+            ) : loadingDates ? (
+              <Flex minH="200px" align="center" justify="center">
+                <VStack gap={3}>
+                  <Spinner size="lg" color="brand.solid" />
+                  <Text color="fg.muted">Loading available dates...</Text>
+                </VStack>
+              </Flex>
+            ) : noDatesAvailable ? (
               <EmptyMessage
                 title="No reports found"
                 description="There are no reporting periods available for this campaign yet."
               />
-            ) : (
+            ) : needsDate ? (
+              <EmptyMessage
+                title="Select a date"
+                description="Choose a reporting date from the dropdown to view the report."
+              />
+            ) : showLoadingReport ? (
+              <Flex minH="300px" align="center" justify="center">
+                <VStack gap={3}>
+                  <Spinner size="lg" color="brand.solid" />
+                  <Text color="fg.muted">Loading report...</Text>
+                </VStack>
+              </Flex>
+            ) : showReport ? (
               <Card.Root
                 variant="outline"
                 bg="bg.panel"
@@ -388,7 +425,7 @@ export default function Home() {
                   </Tabs.Root>
                 </Card.Body>
               </Card.Root>
-            )}
+            ) : null}
           </VStack>
         </Box>
       </Box>

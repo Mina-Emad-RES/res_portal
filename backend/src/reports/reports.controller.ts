@@ -7,6 +7,7 @@ import {
   Delete,
   Req,
   Put,
+  Query,
 } from '@nestjs/common';
 
 import { ReportsService } from './reports.service';
@@ -15,6 +16,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import type { AuthRequest } from '../auth/auth-request.interface';
 import { UpdateReportDto } from './dto/update-report.dto';
+import { FindReportsQueryDto } from './dto/find-reports-query.dto';
 
 @Controller('reports')
 export class ReportsController {
@@ -28,23 +30,30 @@ export class ReportsController {
 
   @Get()
   @Roles(Role.ADMIN, Role.CLIENT, Role.AUDITOR, Role.DM)
-  findAll(@Req() req: AuthRequest) {
-    const user = req.user;
-    return this.reportsService.findAll(user);
+  findAll(@Query() query: FindReportsQueryDto, @Req() req: AuthRequest) {
+    return this.reportsService.findAll(req.user, query);
+  }
+
+  // Must come before @Get(':id') so it isn't matched as an id
+  @Get('filter-options')
+  @Roles(Role.ADMIN, Role.CLIENT, Role.AUDITOR, Role.DM)
+  getFilterOptions(
+    @Req() req: AuthRequest,
+    @Query('clientId') clientId?: string,
+  ) {
+    return this.reportsService.findFilterOptions(req.user, clientId);
   }
 
   @Get(':id')
   @Roles(Role.ADMIN, Role.CLIENT, Role.AUDITOR, Role.DM)
   findOne(@Param('id') id: string, @Req() req: AuthRequest) {
-    const user = req.user;
-    return this.reportsService.findOne(id, user);
+    return this.reportsService.findOne(id, req.user);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN, Role.AUDITOR, Role.DM)
   remove(@Param('id') id: string, @Req() req: AuthRequest) {
-    const user = req.user;
-    return this.reportsService.remove(id, user);
+    return this.reportsService.remove(id, req.user);
   }
 
   @Put(':id')
@@ -54,7 +63,6 @@ export class ReportsController {
     @Body() updateReportDto: UpdateReportDto,
     @Req() req: AuthRequest,
   ) {
-    const user = req.user;
-    return this.reportsService.update(id, updateReportDto, user);
+    return this.reportsService.update(id, updateReportDto, req.user);
   }
 }

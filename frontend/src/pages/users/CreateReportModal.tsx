@@ -18,6 +18,7 @@ import {
   useListCollection,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { toaster } from "../../components/ui/toaster";
 import AuditReportModal from "./AuditReportModal";
@@ -222,7 +223,6 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
   const [type, setType] = useState<ReportType>(derivedType);
   const [clientId, setClientId] = useState("");
   const [reportDate, setReportDate] = useState("");
-  const [clients, setClients] = useState<Client[]>([]);
   const [activeReportType, setActiveReportType] = useState<
     "AUDIT" | "DM" | null
   >(null);
@@ -232,6 +232,13 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
   const [pendingType, setPendingType] = useState<ReportType | null>(null);
   const [lastReportDate, setLastReportDate] = useState("");
   const [selectedVsLastDiff, setSelectedVsLastDiff] = useState(0);
+
+  // Clients query — shared with the dashboard's ["clients"] cache.
+  const clientsQuery = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => axios.get<Client[]>("/users/clients").then((r) => r.data),
+  });
+  const clients = clientsQuery.data ?? [];
 
   const SelectedReportModal = activeReportType
     ? reportModalMap[activeReportType]
@@ -267,19 +274,6 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
     [clients],
   );
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const res = await axios.get("/users/clients");
-        setClients(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchClients();
-  }, []);
-
   const handleNext = async () => {
     if (!clientId || !reportDate || !type) {
       toaster.create({
@@ -303,11 +297,13 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
     setValidatingNext(true);
 
     try {
-      const res = await axios.get<Report[]>("/reports");
+      // One-shot validation — not cached. Note that this endpoint now returns
+      // a paginated response, so we read `items` off the body.
+      const res = await axios.get<{ items: Report[] }>("/reports", {
+        params: { clientId, type: finalType, limit: 100 },
+      });
 
-      const matchingReports = res.data.filter(
-        (report) => report.client?.id === clientId && report.type === finalType,
-      );
+      const matchingReports = res.data.items;
 
       const exactMatch = matchingReports.find(
         (report) =>
@@ -359,6 +355,7 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
     if (pendingType) {
       setWarningOpen(false);
       setActiveReportType(pendingType);
+      setPendingType(null);
     }
   };
 
@@ -524,24 +521,24 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
             </Dialog.Content>
           </Dialog.Positioner>
         </Portal>
-
-        {SelectedReportModal && (
-          <SelectedReportModal
-            open={true}
-            onOpenChange={() => setActiveReportType(null)}
-            baseData={{
-              type,
-              clientId,
-              reportDate,
-            }}
-            onReportCreated={(report: Report) => {
-              onReportCreated(report);
-              setActiveReportType(null);
-              handleClose();
-            }}
-          />
-        )}
       </Dialog.Root>
+
+      {SelectedReportModal && (
+        <SelectedReportModal
+          open={true}
+          onOpenChange={() => setActiveReportType(null)}
+          baseData={{
+            type,
+            clientId,
+            reportDate,
+          }}
+          onReportCreated={(report: Report) => {
+            onReportCreated(report);
+            setActiveReportType(null);
+            handleClose();
+          }}
+        />
+      )}
 
       <Dialog.Root
         open={warningOpen}
@@ -610,7 +607,10 @@ const CreateReportModal = ({ open, onOpenChange, onReportCreated }: Props) => {
                 <Button
                   variant="outline"
                   rounded="xl"
-                  onClick={() => setWarningOpen(false)}
+                  onClick={() => {
+                    setWarningOpen(false);
+                    setPendingType(null);
+                  }}
                 >
                   No
                 </Button>

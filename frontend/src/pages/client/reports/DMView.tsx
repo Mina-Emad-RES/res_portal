@@ -14,7 +14,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import InfoPopover from "../../components/my-ui/InfoPopover";
+import InfoPopover from "../../../components/my-ui/InfoPopover";
 import { sections } from "./report-config";
 import type { ReportContent } from "./report-types";
 

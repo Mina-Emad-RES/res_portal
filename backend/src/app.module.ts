@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/roles.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ReportsModule } from './reports/reports.module';
+import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReportsModule } from './reports/reports.module';
     DatabaseModule,
     AuthModule,
     ReportsModule,
+    ExternalModule,
   ],
   controllers: [AppController],
   providers: [
