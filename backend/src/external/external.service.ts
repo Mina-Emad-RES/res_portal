@@ -177,10 +177,11 @@ export class ExternalService {
     campaignName: string,
   ): string[] {
     const normalizedSearch = campaignName.replace(/\s+/g, '').toLowerCase();
-    const pattern = new RegExp(`^${normalizedSearch}\\.\\d+$`, 'i');
+
+    const pattern = new RegExp(`^${normalizedSearch}(?:\\.\\d+)?$`, 'i');
 
     const patternMatches = allNames.filter((name) => {
-      const normalized = name.replace(/\s+/g, '');
+      const normalized = name.replace(/\s+/g, '').toLowerCase();
       return pattern.test(normalized);
     });
 
