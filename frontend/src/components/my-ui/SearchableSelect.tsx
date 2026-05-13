@@ -1,7 +1,7 @@
 "use client";
 
 import { Combobox, useFilter, useListCollection } from "@chakra-ui/react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type SearchableSelectOption = {
   label: string;
@@ -34,30 +34,55 @@ const SearchableSelect = ({
     filter: contains,
   });
 
+  const selectedOption = useMemo(
+    () => options.find((option) => option.value === value) ?? null,
+    [options, value],
+  );
+
+  const [inputValue, setInputValue] = useState("");
+
   // Keep the underlying collection in sync when the options prop changes
-  // (e.g. async-loaded dropdown values or filter dropdowns refreshing).
+  // e.g. async-loaded dropdown values or filter dropdowns refreshing.
   useEffect(() => {
     set(options);
   }, [options, set]);
 
-  // When the controlled value is cleared externally (e.g. "Clear all"
-  // filters), make sure the visible filter input also resets.
+  // Keep the visible input text in sync with the controlled value.
+  // This fixes refreshes where value exists before async options load.
   useEffect(() => {
-    if (!value) reset();
-  }, [value, reset]);
+    if (!value) {
+      setInputValue("");
+      reset();
+      return;
+    }
+
+    if (selectedOption) {
+      setInputValue(selectedOption.label);
+      reset();
+    }
+  }, [value, selectedOption, reset]);
 
   return (
     <Combobox.Root
       collection={collection}
       value={value ? [value] : []}
+      inputValue={inputValue}
       openOnClick
       size={size}
       disabled={disabled}
       positioning={{ strategy: "fixed", hideWhenDetached: true }}
-      onInputValueChange={(details) => filter(details.inputValue)}
+      onInputValueChange={(details) => {
+        setInputValue(details.inputValue);
+        filter(details.inputValue);
+      }}
       onValueChange={(details) => {
+        const nextValue = details.value[0] ?? "";
+        const nextOption =
+          options.find((option) => option.value === nextValue) ?? null;
+
+        onChange(nextValue);
+        setInputValue(nextOption?.label ?? "");
         reset();
-        onChange(details.value[0] ?? "");
       }}
     >
       <Combobox.Control>
