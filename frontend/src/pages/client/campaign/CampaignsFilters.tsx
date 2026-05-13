@@ -29,13 +29,13 @@ type CampaignsFiltersProps = {
   onDateChange: (dates: [Date | null, Date | null]) => void;
 };
 
-const presets: { value: PresetTriggerValue; label: string }[] = [
-  { value: "last7Days", label: "Last 7 days" },
-  { value: "last30Days", label: "Last 30 days" },
-  { value: "thisMonth", label: "This month" },
-  { value: "lastMonth", label: "Last month" },
-  { value: "thisYear", label: "This year" },
-  { value: "lastYear", label: "Last year" },
+const presets: { id: string; value: PresetTriggerValue; label: string }[] = [
+  { id: "last7Days", value: "last7Days", label: "Last 7 days" },
+  { id: "last30Days", value: "last30Days", label: "Last 30 days" },
+  { id: "thisMonth", value: "thisMonth", label: "This month" },
+  { id: "lastMonth", value: "lastMonth", label: "Last month" },
+  { id: "thisYear", value: "thisYear", label: "This year" },
+  { id: "lastYear", value: "lastYear", label: "Last year" },
 ];
 
 export default function CampaignsFilters({
@@ -211,12 +211,8 @@ export default function CampaignsFilters({
                     >
                       Quick select
                     </Text>
-                    {presets.map(({ value, label }) => (
-                      <DatePicker.PresetTrigger
-                        key={value}
-                        value={value}
-                        asChild
-                      >
+                    {presets.map(({ id, value, label }) => (
+                      <DatePicker.PresetTrigger key={id} value={value} asChild>
                         <Button
                           variant="ghost"
                           size="sm"
