@@ -101,6 +101,27 @@ export function useReportsData() {
     enabled: !!selectedDate,
   });
 
+  // Auto-select the latest date when none is selected.
+  // Guards:
+  // - If `selectedDate` is already set (from the URL), do nothing. This is
+  //   what preserves the dropdown value when navigating back to this page.
+  // - Wait until the dates query has settled. With `keepPreviousData`, the
+  //   cached array can briefly belong to the previous client after a switch.
+  // - ISO YYYY-MM-DD strings sort lexicographically, so a plain string sort
+  //   reliably yields the latest date regardless of backend ordering.
+  useEffect(() => {
+    if (selectedDate) return;
+    if (datesQuery.isFetching) return;
+
+    const availableDates = datesQuery.data;
+    if (!availableDates || availableDates.length === 0) return;
+
+    const latestDate = [...availableDates].sort().at(-1);
+    if (latestDate) {
+      updateParams({ date: latestDate });
+    }
+  }, [selectedDate, datesQuery.isFetching, datesQuery.data]);
+
   // Auto-switch tab only when the active tab has no data in this period.
   useEffect(() => {
     const data = reportQuery.data;
