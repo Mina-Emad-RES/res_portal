@@ -130,7 +130,7 @@ const TourTooltip = ({
   );
 };
 
-export default function Home() {
+export default function Reports() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();

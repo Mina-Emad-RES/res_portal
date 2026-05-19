@@ -10,7 +10,7 @@ export const RoleRedirect = () => {
   if (!user) return <Navigate to="/login" replace />;
 
   if (user.role === "CLIENT") {
-    return <Navigate to="/reports" replace state={location.state} />;
+    return <Navigate to="/campaign" replace state={location.state} />;
   }
 
   return <Navigate to="/dashboard" replace />;

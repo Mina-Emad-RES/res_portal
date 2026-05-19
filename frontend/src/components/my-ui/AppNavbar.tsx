@@ -16,8 +16,8 @@ export const AppNavbar = () => {
         ...(user?.role === "ADMIN"
           ? [{ label: "Home", path: "/dashboard" }]
           : []),
-        { label: "Reports", path: "/reports" },
         { label: "Campaign", path: "/campaign" },
+        { label: "Reports", path: "/reports" },
       ]
     : [];
 

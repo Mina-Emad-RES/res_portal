@@ -10,7 +10,7 @@ import { AdminPanel } from "./pages/admin/adminPanel";
 import { SetPassword } from "./pages/auth/setPassword";
 import { RequireAuth } from "./context/RequireAuth";
 import { RequireAdmin } from "./context/RequireAdmin";
-import Home from "./pages/client/reports/home";
+import Reports from "./pages/client/reports/Reports";
 import Campaign from "./pages/client/campaign/campaign";
 import { RoleRedirect } from "./context/RoleRedirect";
 import { RequireClient } from "./context/RequireClient";
@@ -85,7 +85,7 @@ function App() {
             path="/reports"
             element={
               <RequireClient>
-                <Home />
+                <Reports />
               </RequireClient>
             }
           />
