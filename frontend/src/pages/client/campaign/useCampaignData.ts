@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../../api/axios";
@@ -164,6 +164,24 @@ export function useCampaignData() {
         .then((r) => (r.data.callLogs ?? []) as CallLogEntry[]),
     enabled: haveRange,
   });
+
+  // Auto-select yesterday as the default range when a campaign is set but no
+  // range is in the URL.
+  // Guards:
+  // - If `startStr` or `endStr` is already in the URL, do nothing. This is
+  //   what preserves the user's selection across refresh.
+  // - Wait until `effectiveCampaign` is known so we don't write a range that
+  //   would just be cleared on the next campaign change.
+  useEffect(() => {
+    if (!effectiveCampaign) return;
+    if (startStr || endStr) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const formatted = formatDate(yesterday);
+
+    updateParams({ start: formatted, end: formatted });
+  }, [effectiveCampaign, startStr, endStr]);
 
   // Translate query state into the AsyncState shape Campaign.tsx expects.
   const summaryState: AsyncState<DialerSummary | null> = !haveRange
