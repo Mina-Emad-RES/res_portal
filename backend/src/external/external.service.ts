@@ -1,7 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
-  Logger,
+  // Logger,
   Scope,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -71,7 +71,7 @@ export interface CampaignReportResult {
 
 @Injectable({ scope: Scope.DEFAULT })
 export class ExternalService {
-  private readonly logger = new Logger(ExternalService.name);
+  // private readonly logger = new Logger(ExternalService.name);
   private tokenStore: TokenStore | null = null;
 
   constructor(private readonly configService: ConfigService) {}
@@ -80,18 +80,18 @@ export class ExternalService {
 
   private isTokenValid(): boolean {
     if (!this.tokenStore) {
-      this.logger.log('Token check: no token stored');
+      // this.logger.log('Token check: no token stored');
       return false;
     }
 
     const now = Date.now();
     const timeLeft = this.tokenStore.expiresAt - now;
 
-    this.logger.log(
-      `Token check: expiresAt=${new Date(this.tokenStore.expiresAt).toISOString()}, ` +
-        `timeLeft=${Math.round(timeLeft / 1000)}s, ` +
-        `valid=${timeLeft > 60_000}`,
-    );
+    // this.logger.log(
+    //   `Token check: expiresAt=${new Date(this.tokenStore.expiresAt).toISOString()}, ` +
+    //     `timeLeft=${Math.round(timeLeft / 1000)}s, ` +
+    //     `valid=${timeLeft > 60_000}`,
+    // );
 
     return timeLeft > 60_000;
   }
@@ -135,18 +135,18 @@ export class ExternalService {
       expiresAt: Date.now() + expiresIn * 1000,
     };
 
-    this.logger.log('Fetched new reporting-app token');
+    // this.logger.log('Fetched new reporting-app token');
     return token;
   }
 
   private async getToken(): Promise<string> {
     if (this.isTokenValid()) {
-      this.logger.log(
-        `Reusing cached token: ${this.tokenStore!.token.slice(0, 20)}...`,
-      );
+      // this.logger.log(
+      //   `Reusing cached token: ${this.tokenStore!.token.slice(0, 20)}...`,
+      // );
       return this.tokenStore!.token;
     }
-    this.logger.log('Fetching new token...');
+    // this.logger.log('Fetching new token...');
     return this.fetchNewToken();
   }
 

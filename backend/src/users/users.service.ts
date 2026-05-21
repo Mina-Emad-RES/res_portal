@@ -43,7 +43,7 @@ export class UsersService {
           username: createUserDto.username,
           role: createUserDto.role,
           passwordSetupToken: tokenHash,
-          passwordSetupExpires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          passwordSetupExpires: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
         },
         select: userSelect,
       });
@@ -193,7 +193,7 @@ export class UsersService {
       where: { id: userId },
       data: {
         passwordSetupToken: tokenHash,
-        passwordSetupExpires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        passwordSetupExpires: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
       },
       select: {
         id: true,

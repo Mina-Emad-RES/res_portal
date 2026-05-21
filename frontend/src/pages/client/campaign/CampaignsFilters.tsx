@@ -119,7 +119,7 @@ export default function CampaignsFilters({
         </Box>
       )}
 
-      <Box>
+      <Box className="tour-campaign-date-picker">
         <Text
           fontWeight="medium"
           color="fg.subtle"

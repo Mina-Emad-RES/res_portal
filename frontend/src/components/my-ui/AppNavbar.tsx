@@ -51,6 +51,13 @@ export const AppNavbar = () => {
     navigate(stored ? `${path}${stored}` : path);
   };
 
+  // Anchor classes for the guided tour to point at specific nav items.
+  const tourClassFor = (path: string): string | undefined => {
+    if (path === "/reports") return "tour-nav-reports";
+    if (path === "/campaign") return "tour-nav-campaign";
+    return undefined;
+  };
+
   return (
     <Box as="nav" bg="bg.panel" borderBottom="1px solid" borderColor="border">
       <Flex
@@ -93,6 +100,7 @@ export const AppNavbar = () => {
                 <Box
                   key={path}
                   as="button"
+                  className={tourClassFor(path)}
                   position="relative"
                   px={4}
                   py={2}

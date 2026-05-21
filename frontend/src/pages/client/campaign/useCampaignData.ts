@@ -177,10 +177,15 @@ export function useCampaignData() {
     if (startStr || endStr) return;
 
     const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const formatted = formatDate(yesterday);
+    yesterday.setDate(yesterday.getDate());
 
-    updateParams({ start: formatted, end: formatted });
+    const sixDaysBefore = new Date(yesterday);
+    sixDaysBefore.setDate(sixDaysBefore.getDate() - 6);
+
+    updateParams({
+      start: formatDate(sixDaysBefore),
+      end: formatDate(yesterday),
+    });
   }, [effectiveCampaign, startStr, endStr]);
 
   // Translate query state into the AsyncState shape Campaign.tsx expects.

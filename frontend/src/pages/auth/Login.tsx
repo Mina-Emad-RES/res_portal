@@ -39,8 +39,11 @@ export const Login = () => {
 
       const res = await loginApi(username, password);
       login(res.user, res.access_token);
+
       if (res.user.role === "CLIENT" && shouldRunTourAfterLogin) {
-        navigate("/", {
+        // Send them straight to /reports so the tour starts there,
+        // then it'll hop to /campaign for the last few steps.
+        navigate("/reports", {
           replace: true,
           state: { runClientTour: true },
         });
