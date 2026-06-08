@@ -42,6 +42,27 @@ api.interceptors.response.use(
       // Unauthorized: token expired or invalid
       localStorage.removeItem("token");
       emitLogout();
+    } else if (error.response.status === 429) {
+      // Rate limited — can come from nginx (HTML body, no message)
+      // or from NestJS @nestjs/throttler (JSON body with a message).
+      const retryAfter = Number(error.response.headers?.["retry-after"]);
+      const backendMessage =
+        typeof error.response.data?.message === "string"
+          ? error.response.data.message
+          : null;
+
+      let detail: string;
+      if (retryAfter > 0) {
+        detail = `Too many requests. Please wait ${retryAfter} second${
+          retryAfter === 1 ? "" : "s"
+        } and try again.`;
+      } else {
+        detail =
+          backendMessage ||
+          "Too many requests. Please slow down and try again in a moment.";
+      }
+
+      window.dispatchEvent(new CustomEvent("global:error", { detail }));
     } else if (error.response.status >= 500) {
       // Server error
       window.dispatchEvent(
