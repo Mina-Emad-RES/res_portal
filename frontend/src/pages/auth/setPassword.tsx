@@ -1,9 +1,18 @@
 "use client";
 
-import { Box, Button, Field, Text, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Center,
+  Field,
+  Spinner,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { Branding } from "../../components/my-ui/Branding";
 import { FormCard } from "../../components/my-ui/FormCard";
 import FloatingLabelInput from "../../components/my-ui/FloatingInputField";
+import FloatingPasswordInputField from "../../components/my-ui/FloatingPasswordInputField";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "../../api/axios";
@@ -17,11 +26,18 @@ export const SetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // form/submit validation errors
   const [error, setError] = useState<string | null>(null);
+
+  // token validation state (separate from form errors)
+  const [validating, setValidating] = useState(true);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing token");
+      setTokenError("Invalid or missing token.");
+      setValidating(false);
       return;
     }
 
@@ -33,7 +49,9 @@ export const SetPassword = () => {
         setUsername(res.data.username);
       } catch (err) {
         console.log(err);
-        setError("Invalid or expired link");
+        setTokenError("This link is invalid or has expired.");
+      } finally {
+        setValidating(false);
       }
     };
 
@@ -85,88 +103,125 @@ export const SetPassword = () => {
         <Branding />
 
         <FormCard
-          title="Set Password"
-          description="Create a secure password to activate your account."
+          title={tokenError ? "Link Unavailable" : "Set Password"}
+          description={
+            tokenError
+              ? "We couldn't verify this link."
+              : "Create a secure password to activate your account."
+          }
         >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <VStack gap={5} align="stretch">
+          {validating ? (
+            <Center py={10}>
+              <VStack gap={3}>
+                <Spinner colorPalette="brand" />
+                <Text fontSize="sm" color="fg.muted">
+                  Validating your link…
+                </Text>
+              </VStack>
+            </Center>
+          ) : tokenError ? (
+            <VStack gap={4} align="stretch">
               <Box
                 px={4}
                 py={3}
                 rounded="xl"
                 borderWidth="1px"
-                borderColor="border"
+                borderColor="border.emphasized"
                 bg="bg.subtle"
               >
-                <Text fontSize="sm" color="fg.muted">
-                  Use at least 6 characters and include at least one letter and
-                  one number.
+                <Text fontSize="sm" color="status.danger">
+                  {tokenError}
                 </Text>
               </Box>
 
-              <Field.Root>
-                <FloatingLabelInput
-                  label="Username"
-                  value={username}
-                  disabled
-                />
-              </Field.Root>
-
-              <Field.Root invalid={!!error}>
-                <FloatingLabelInput
-                  label="New Password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </Field.Root>
-
-              <Field.Root invalid={!!error}>
-                <FloatingLabelInput
-                  label="Confirm Password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </Field.Root>
-
-              {error && (
+              <Button
+                variant="ghost"
+                colorPalette="brand"
+                size="sm"
+                onClick={() => navigate("/login", { replace: true })}
+              >
+                Back to login
+              </Button>
+            </VStack>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+            >
+              <VStack gap={5} align="stretch">
                 <Box
                   px={4}
                   py={3}
                   rounded="xl"
                   borderWidth="1px"
-                  borderColor="border.emphasized"
+                  borderColor="border"
                   bg="bg.subtle"
                 >
-                  <Text fontSize="sm" color="status.danger">
-                    {error}
+                  <Text fontSize="sm" color="fg.muted">
+                    Use at least 6 characters and include at least one letter
+                    and one number.
                   </Text>
                 </Box>
-              )}
 
-              <Button
-                colorPalette="brand"
-                type="submit"
-                size="lg"
-                rounded="xl"
-                loading={loading}
-                disabled={!password || !confirmPassword || loading}
-                w="full"
-              >
-                Set Password
-              </Button>
+                <Field.Root>
+                  <FloatingLabelInput
+                    label="Username"
+                    value={username}
+                    disabled
+                  />
+                </Field.Root>
 
-              <Text fontSize="sm" color="fg.muted" textAlign="center">
-                You will be redirected to login after setting your password.
-              </Text>
-            </VStack>
-          </form>
+                <Field.Root invalid={!!error}>
+                  <FloatingPasswordInputField
+                    label="New Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Field.Root>
+
+                <Field.Root invalid={!!error}>
+                  <FloatingPasswordInputField
+                    label="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </Field.Root>
+
+                {error && (
+                  <Box
+                    px={4}
+                    py={3}
+                    rounded="xl"
+                    borderWidth="1px"
+                    borderColor="border.emphasized"
+                    bg="bg.subtle"
+                  >
+                    <Text fontSize="sm" color="status.danger">
+                      {error}
+                    </Text>
+                  </Box>
+                )}
+
+                <Button
+                  colorPalette="brand"
+                  type="submit"
+                  size="lg"
+                  rounded="xl"
+                  loading={loading}
+                  disabled={!password || !confirmPassword || loading}
+                  w="full"
+                >
+                  Set Password
+                </Button>
+
+                <Text fontSize="sm" color="fg.muted" textAlign="center">
+                  You will be redirected to login after setting your password.
+                </Text>
+              </VStack>
+            </form>
+          )}
         </FormCard>
       </VStack>
     </Box>

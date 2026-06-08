@@ -24,6 +24,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import CreateUserModal from "./CreateUserModal";
 import type { User } from "../../types/auth";
+import { useSortParams } from "../../hooks/useSortParams";
+import SortableColumnHeader from "../../components/my-ui/SortableColumnHeader";
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 
@@ -67,10 +69,53 @@ const selectContentStyles = {
 
 const ROLE_ORDER = ["ADMIN", "AUDITOR", "DM", "CLIENT"];
 
+// Order used when sorting by the (derived) Status column.
+const STATUS_ORDER: UserStatus["type"][] = [
+  "ACTIVE",
+  "INACTIVE",
+  "MAGIC_LINK",
+  "SETUP_EXPIRED",
+];
+
+// --- Status helpers (module-scope so the sort comparator can reuse them) ---
+
+const getUserStatus = (user: User): UserStatus => {
+  if (user.passwordSetupToken) {
+    if (
+      user.passwordSetupExpires &&
+      new Date(user.passwordSetupExpires) > new Date()
+    ) {
+      return { type: "MAGIC_LINK", color: "blue" };
+    }
+    return { type: "SETUP_EXPIRED", color: "gray" };
+  }
+  return user.isActive
+    ? { type: "ACTIVE", color: "green" }
+    : { type: "INACTIVE", color: "orange" };
+};
+
+const getStatusLabel = (status: UserStatus) => {
+  if (status.type === "MAGIC_LINK") return "Setup Pending";
+  if (status.type === "SETUP_EXPIRED") return "Setup Expired";
+  if (status.type === "ACTIVE") return "Active";
+  return "Inactive";
+};
+
+const getStatusPalette = (status: UserStatus) => {
+  if (status.type === "MAGIC_LINK") return "brand";
+  if (status.type === "SETUP_EXPIRED") return "gray";
+  if (status.type === "ACTIVE") return "green";
+  return "orange";
+};
+
 const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
   const queryClient = useQueryClient();
   const isClientView = roleFilter === "CLIENT";
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Sort state lives in the URL (shared across both admin tabs since the
+  // columns are identical). Pass keyParam/dirParam if you want per-tab sort.
+  const { sortKey, sortDir, toggleSort } = useSortParams();
 
   // Single query for the full user list. We filter/sort in-memory below so
   // both UsersTab variants (clients view + internal view) can share the cache.
@@ -82,14 +127,51 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
   const users = useMemo(() => {
     const data = usersQuery.data;
     if (!Array.isArray(data)) return [];
-    const sorted = [...data].sort((a, b) => {
-      if (a.role === b.role) return a.username.localeCompare(b.username);
-      return ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role);
-    });
-    return roleFilter
-      ? sorted.filter((u) => u.role === roleFilter)
-      : sorted.filter((u) => u.role !== "CLIENT");
-  }, [usersQuery.data, roleFilter]);
+
+    const filtered = roleFilter
+      ? data.filter((u) => u.role === roleFilter)
+      : data.filter((u) => u.role !== "CLIENT");
+
+    const dir = sortDir === "asc" ? 1 : -1;
+
+    const compare = (a: User, b: User): number => {
+      // No active column -> default ordering: role order, then username.
+      if (!sortKey) {
+        if (a.role !== b.role) {
+          return ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role);
+        }
+        return a.username.localeCompare(b.username);
+      }
+
+      let cmp = 0;
+      switch (sortKey) {
+        case "username":
+          cmp = a.username.localeCompare(b.username);
+          break;
+        case "role":
+          cmp = ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role);
+          break;
+        case "status":
+          cmp =
+            STATUS_ORDER.indexOf(getUserStatus(a).type) -
+            STATUS_ORDER.indexOf(getUserStatus(b).type);
+          break;
+        case "createdAt":
+          cmp =
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case "updatedAt":
+          cmp =
+            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+      }
+      // Stable tiebreak.
+      if (cmp === 0) cmp = a.username.localeCompare(b.username);
+      return cmp * dir;
+    };
+
+    return [...filtered].sort(compare);
+  }, [usersQuery.data, roleFilter, sortKey, sortDir]);
 
   // Mutations: each one fires the API call, then invalidates the users
   // query on success — TanStack Query refetches and the table updates.
@@ -140,9 +222,6 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
     onSuccess: async (res) => {
       const link = `${FRONTEND_URL}/set-password?token=${res.data.setupToken}`;
       await navigator.clipboard.writeText(link);
-      // No need to invalidate ["users"] — passwordSetupToken changes server-side
-      // but we don't surface the token value in the table; still, invalidating
-      // keeps the row in sync if expiry/timestamps are shown.
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toaster.create({
         title: "New setup link generated",
@@ -154,35 +233,6 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
       toaster.create({ title: "Failed to generate link", type: "error" });
     },
   });
-
-  const getUserStatus = (user: User): UserStatus => {
-    if (user.passwordSetupToken) {
-      if (
-        user.passwordSetupExpires &&
-        new Date(user.passwordSetupExpires) > new Date()
-      ) {
-        return { type: "MAGIC_LINK", color: "blue" };
-      }
-      return { type: "SETUP_EXPIRED", color: "gray" };
-    }
-    return user.isActive
-      ? { type: "ACTIVE", color: "green" }
-      : { type: "INACTIVE", color: "orange" };
-  };
-
-  const getStatusLabel = (status: UserStatus) => {
-    if (status.type === "MAGIC_LINK") return "Setup Pending";
-    if (status.type === "SETUP_EXPIRED") return "Setup Expired";
-    if (status.type === "ACTIVE") return "Active";
-    return "Inactive";
-  };
-
-  const getStatusPalette = (status: UserStatus) => {
-    if (status.type === "MAGIC_LINK") return "brand";
-    if (status.type === "SETUP_EXPIRED") return "gray";
-    if (status.type === "ACTIVE") return "green";
-    return "orange";
-  };
 
   if (usersQuery.isLoading) {
     return (
@@ -269,21 +319,41 @@ const UsersTab = ({ roleFilter }: { roleFilter?: string }) => {
               <Table.Root variant="line" size="sm" stickyHeader>
                 <Table.Header>
                   <Table.Row bg="bg.muted">
-                    <Table.ColumnHeader color="fg.subtle">
-                      Username
-                    </Table.ColumnHeader>
-                    <Table.ColumnHeader color="fg.subtle">
-                      Role
-                    </Table.ColumnHeader>
-                    <Table.ColumnHeader color="fg.subtle">
-                      Status
-                    </Table.ColumnHeader>
-                    <Table.ColumnHeader color="fg.subtle">
-                      Created At
-                    </Table.ColumnHeader>
-                    <Table.ColumnHeader color="fg.subtle">
-                      Updated At
-                    </Table.ColumnHeader>
+                    <SortableColumnHeader
+                      label="Username"
+                      columnKey="username"
+                      activeKey={sortKey}
+                      direction={sortDir}
+                      onSort={toggleSort}
+                    />
+                    <SortableColumnHeader
+                      label="Role"
+                      columnKey="role"
+                      activeKey={sortKey}
+                      direction={sortDir}
+                      onSort={toggleSort}
+                    />
+                    <SortableColumnHeader
+                      label="Status"
+                      columnKey="status"
+                      activeKey={sortKey}
+                      direction={sortDir}
+                      onSort={toggleSort}
+                    />
+                    <SortableColumnHeader
+                      label="Created At"
+                      columnKey="createdAt"
+                      activeKey={sortKey}
+                      direction={sortDir}
+                      onSort={toggleSort}
+                    />
+                    <SortableColumnHeader
+                      label="Updated At"
+                      columnKey="updatedAt"
+                      activeKey={sortKey}
+                      direction={sortDir}
+                      onSort={toggleSort}
+                    />
                     <Table.ColumnHeader color="fg.subtle">
                       Actions
                     </Table.ColumnHeader>

@@ -31,6 +31,8 @@ import { toaster } from "../../components/ui/toaster";
 import SearchableSelect, {
   type SearchableSelectOption,
 } from "../../components/my-ui/SearchableSelect";
+import SortableColumnHeader from "../../components/my-ui/SortableColumnHeader";
+import { useSortParams } from "../../hooks/useSortParams";
 import CreateReportModal from "./CreateReportModal";
 import DMReportModal from "./DMReportModal";
 import AuditReportModal from "./AuditReportModal";
@@ -65,6 +67,18 @@ const PAGE_SIZE = 50;
 const FILTER_KEYS = ["clientId", "type", "createdById", "reportDate"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
+// Map UI column keys -> backend sort field names.
+// Adjust the right-hand values to whatever your /reports endpoint expects.
+// `client` / `createdBy` sort by the related username and need the backend
+// to support sorting across that join.
+const SORT_COLUMNS: Record<string, string> = {
+  type: "type",
+  client: "client",
+  createdBy: "createdBy",
+  reportDate: "reportDate",
+  createdAt: "createdAt",
+};
+
 const formatReportDate = (value: string) => {
   const [year, month, day] = value.slice(0, 10).split("-");
   return `${month}/${day}/${year}`;
@@ -84,6 +98,9 @@ const Dashboard = () => {
     }),
     [searchParams],
   );
+
+  // Sort state also lives in the URL (?sort=...&dir=...).
+  const { sortKey, sortDir, toggleSort } = useSortParams();
 
   const updateFilter = (key: FilterKey, value: string) => {
     setSearchParams(
@@ -114,27 +131,31 @@ const Dashboard = () => {
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Build the query params we send to /reports (filters minus cursor/limit,
-  // which useInfiniteQuery manages itself via pageParam).
-  const filterParams = useMemo(() => {
+  // Build the query params we send to /reports (filters + sort, minus
+  // cursor/limit, which useInfiniteQuery manages itself via pageParam).
+  const queryParams = useMemo(() => {
     const params: Record<string, string> = {};
     for (const key of FILTER_KEYS) {
       const value = filters[key];
       if (value) params[key] = value;
     }
+    if (sortKey) {
+      params.sortBy = SORT_COLUMNS[sortKey] ?? sortKey;
+      params.sortOrder = sortDir;
+    }
     return params;
-  }, [filters]);
+  }, [filters, sortKey, sortDir]);
 
   // Paginated reports list.
-  // queryKey includes the filter object, so changing any filter
+  // queryKey includes the params object, so changing any filter OR the sort
   // invalidates the existing pages and starts fresh from cursor=undefined.
   const reportsQuery = useInfiniteQuery({
-    queryKey: ["reports", "list", filterParams],
+    queryKey: ["reports", "list", queryParams],
     queryFn: ({ pageParam }) =>
       axios
         .get<ReportsResponse>("/reports", {
           params: {
-            ...filterParams,
+            ...queryParams,
             limit: PAGE_SIZE,
             ...(pageParam ? { cursor: pageParam } : {}),
           },
@@ -156,7 +177,7 @@ const Dashboard = () => {
     queryFn: () =>
       axios.get<ClientOption[]>("/users/clients").then((r) => r.data),
   });
-  const clients = clientsQuery.data ?? [];
+  const clients = useMemo(() => clientsQuery.data ?? [], [clientsQuery.data]);
 
   // Filter options (types, dates, creators)
   const filterOptionsQuery = useQuery({
@@ -187,8 +208,6 @@ const Dashboard = () => {
   const deleteMutation = useMutation({
     mutationFn: (reportId: string) => axios.delete(`/reports/${reportId}`),
     onSuccess: () => {
-      // Refetch the list and filter options (a deleted report's date may
-      // no longer appear in availableDates).
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       toaster.create({ title: "Report deleted", type: "success" });
     },
@@ -204,15 +223,18 @@ const Dashboard = () => {
     });
   };
 
+  // Pull the stable pieces out so the effect's deps are exact.
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = reportsQuery;
+
   // Infinite scroll sentinel
   useEffect(() => {
     const target = loadMoreRef.current;
-    if (!target || !reportsQuery.hasNextPage) return;
+    if (!target || !hasNextPage) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !reportsQuery.isFetchingNextPage) {
-          reportsQuery.fetchNextPage();
+        if (entries[0].isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
         }
       },
       { threshold: 0.1, rootMargin: "200px" },
@@ -220,12 +242,7 @@ const Dashboard = () => {
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [
-    reportsQuery.hasNextPage,
-    reportsQuery.isFetchingNextPage,
-    reportsQuery.fetchNextPage,
-    reports.length,
-  ]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, reports.length]);
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
   const showTypeFilter = filterOptions.availableTypes.length > 1;
@@ -274,8 +291,6 @@ const Dashboard = () => {
         content: editReport.content,
       },
       onReportCreated: () => {
-        // The report was updated server-side; invalidate everything so the
-        // list and filter options refetch.
         queryClient.invalidateQueries({ queryKey: ["reports"] });
         setEditReport(null);
       },
@@ -563,21 +578,41 @@ const Dashboard = () => {
                   <Table.Root variant="line" size="sm">
                     <Table.Header>
                       <Table.Row bg="bg.muted">
-                        <Table.ColumnHeader color="fg.subtle">
-                          Type
-                        </Table.ColumnHeader>
-                        <Table.ColumnHeader color="fg.subtle">
-                          Client
-                        </Table.ColumnHeader>
-                        <Table.ColumnHeader color="fg.subtle">
-                          Created By
-                        </Table.ColumnHeader>
-                        <Table.ColumnHeader color="fg.subtle">
-                          Report Date
-                        </Table.ColumnHeader>
-                        <Table.ColumnHeader color="fg.subtle">
-                          Created At
-                        </Table.ColumnHeader>
+                        <SortableColumnHeader
+                          label="Type"
+                          columnKey="type"
+                          activeKey={sortKey}
+                          direction={sortDir}
+                          onSort={toggleSort}
+                        />
+                        <SortableColumnHeader
+                          label="Client"
+                          columnKey="client"
+                          activeKey={sortKey}
+                          direction={sortDir}
+                          onSort={toggleSort}
+                        />
+                        <SortableColumnHeader
+                          label="Created By"
+                          columnKey="createdBy"
+                          activeKey={sortKey}
+                          direction={sortDir}
+                          onSort={toggleSort}
+                        />
+                        <SortableColumnHeader
+                          label="Report Date"
+                          columnKey="reportDate"
+                          activeKey={sortKey}
+                          direction={sortDir}
+                          onSort={toggleSort}
+                        />
+                        <SortableColumnHeader
+                          label="Created At"
+                          columnKey="createdAt"
+                          activeKey={sortKey}
+                          direction={sortDir}
+                          onSort={toggleSort}
+                        />
                         <Table.ColumnHeader color="fg.subtle">
                           Actions
                         </Table.ColumnHeader>

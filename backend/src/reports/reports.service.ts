@@ -13,7 +13,11 @@ import {
   handlePrismaUniqueViolation,
 } from '../common/prisma/prisma-errors';
 import { UpdateReportDto } from './dto/update-report.dto';
-import { FindReportsQueryDto } from './dto/find-reports-query.dto';
+import {
+  FindReportsQueryDto,
+  ReportSortField,
+  ReportSortOrder,
+} from './dto/find-reports-query.dto';
 
 const reportSelect = Prisma.validator<Prisma.ReportSelect>()({
   id: true,
@@ -38,6 +42,19 @@ const reportSelect = Prisma.validator<Prisma.ReportSelect>()({
     },
   },
 });
+
+// Maps a whitelisted sort field -> a Prisma orderBy fragment.
+// `client` / `createdBy` sort by the related user's username (a JOIN).
+const SORT_FIELD_BUILDERS: Record<
+  ReportSortField,
+  (dir: Prisma.SortOrder) => Prisma.ReportOrderByWithRelationInput
+> = {
+  [ReportSortField.TYPE]: (dir) => ({ type: dir }),
+  [ReportSortField.REPORT_DATE]: (dir) => ({ reportDate: dir }),
+  [ReportSortField.CREATED_AT]: (dir) => ({ createdAt: dir }),
+  [ReportSortField.CLIENT]: (dir) => ({ client: { username: dir } }),
+  [ReportSortField.CREATED_BY]: (dir) => ({ createdBy: { username: dir } }),
+};
 
 @Injectable()
 export class ReportsService {
@@ -84,6 +101,23 @@ export class ReportsService {
     [Role.DM]: ReportType.DM,
   };
 
+  // Builds a deterministic orderBy for cursor pagination. The unique `id`
+  // tiebreaker is ALWAYS appended (matching the chosen direction) so the
+  // cursor seek never skips/duplicates rows, regardless of sort column.
+  private buildOrderBy(
+    query: FindReportsQueryDto,
+  ): Prisma.ReportOrderByWithRelationInput[] {
+    const dir: Prisma.SortOrder =
+      query.sortOrder === ReportSortOrder.ASC ? 'asc' : 'desc';
+
+    if (query.sortBy && SORT_FIELD_BUILDERS[query.sortBy]) {
+      return [SORT_FIELD_BUILDERS[query.sortBy](dir), { id: dir }];
+    }
+
+    // Default ordering (unchanged from before).
+    return [{ createdAt: 'desc' }, { id: 'desc' }];
+  }
+
   async findAll(requester: JwtPayload, query: FindReportsQueryDto) {
     const where: Prisma.ReportWhereInput = {};
     const limit = Math.min(query.limit ?? 50, 100);
@@ -117,7 +151,7 @@ export class ReportsService {
     const records = await this.databaseService.report.findMany({
       where,
       select: reportSelect,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: this.buildOrderBy(query),
       take: limit + 1,
       ...(query.cursor && {
         skip: 1,

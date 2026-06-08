@@ -9,9 +9,25 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { useSearchParams } from "react-router-dom";
 import UsersTab from "./usersTab";
+import SettingsTab from "./SettingsTab";
 
 export const AdminPanel = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") ?? "users";
+
+  const setActiveTab = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
   return (
     <Box maxW="7xl" mx="auto" px={{ base: 4, md: 6 }} py={{ base: 6, md: 8 }}>
       <VStack align="stretch" gap={6}>
@@ -54,7 +70,11 @@ export const AdminPanel = () => {
           shadow="xs"
         >
           <Card.Body p={{ base: 4, md: 5 }}>
-            <Tabs.Root defaultValue="users" variant="plain">
+            <Tabs.Root
+              value={activeTab}
+              onValueChange={(details) => setActiveTab(details.value)}
+              variant="plain"
+            >
               <Tabs.List
                 bg="bg.muted"
                 p="1"
@@ -102,6 +122,26 @@ export const AdminPanel = () => {
                 >
                   Campaigns
                 </Tabs.Trigger>
+
+                <Tabs.Trigger
+                  value="settings"
+                  px={4}
+                  py={2.5}
+                  rounded="lg"
+                  color="fg.muted"
+                  borderWidth="1px"
+                  borderColor="transparent"
+                  transition="all 0.2s ease"
+                  _hover={{ color: "fg" }}
+                  _selected={{
+                    bg: "brand.subtle",
+                    color: "brand.fg",
+                    borderColor: "brand.emphasized",
+                    shadow: "xs",
+                  }}
+                >
+                  Settings
+                </Tabs.Trigger>
               </Tabs.List>
 
               <Tabs.Content value="users" pt={5}>
@@ -110,6 +150,10 @@ export const AdminPanel = () => {
 
               <Tabs.Content value="campaigns" pt={5}>
                 <UsersTab roleFilter="CLIENT" />
+              </Tabs.Content>
+
+              <Tabs.Content value="settings" pt={5}>
+                <SettingsTab />
               </Tabs.Content>
             </Tabs.Root>
           </Card.Body>

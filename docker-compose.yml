@@ -28,6 +28,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       REPORTING_APP_USERNAME: ${REPORTING_APP_USERNAME}
       REPORTING_APP_PASSWORD: ${REPORTING_APP_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN}
 
     command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
     depends_on:

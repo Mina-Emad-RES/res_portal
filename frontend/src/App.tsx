@@ -12,6 +12,7 @@ import { RequireAuth } from "./context/RequireAuth";
 import { RequireAdmin } from "./context/RequireAdmin";
 import Reports from "./pages/client/reports/reports";
 import Campaign from "./pages/client/campaign/campaign";
+import AppointmentsFeedbackLoop from "./pages/client/appointments/appointments";
 import { RoleRedirect } from "./context/RoleRedirect";
 import { RequireClient } from "./context/RequireClient";
 import { RequireStaff } from "./context/RequireStaff";
@@ -95,6 +96,15 @@ function App() {
             element={
               <RequireClient>
                 <Campaign />
+              </RequireClient>
+            }
+          />
+
+          <Route
+            path="/appointments"
+            element={
+              <RequireClient>
+                <AppointmentsFeedbackLoop />
               </RequireClient>
             }
           />

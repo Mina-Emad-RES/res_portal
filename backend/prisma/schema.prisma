@@ -48,6 +48,12 @@ model Report {
   @@unique([clientId, reportDate, type])
 }
 
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 enum ReportType {
   AUDIT
   DM

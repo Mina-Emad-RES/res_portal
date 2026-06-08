@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './decorators/public.decorator';
@@ -14,6 +15,9 @@ export class AuthController {
     return req.user;
   }
 
+  // Unauthenticated — IP-based limiting for these is handled by nginx at the
+  // edge, so skip the app throttler (which keys by user and has none here).
+  @SkipThrottle()
   @Public()
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
@@ -25,12 +29,14 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  @SkipThrottle()
   @Public()
   @Get('validate-password-token')
   validatePasswordToken(@Query('token') token: string) {
     return this.authService.validatePasswordSetupToken(token);
   }
 
+  @SkipThrottle()
   @Public()
   @Post('set-password')
   async setPassword(@Body() body: SetPasswordDto) {

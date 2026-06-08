@@ -7,6 +7,7 @@ import { loginApi } from "../../api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import FloatingLabelInput from "../../components/my-ui/FloatingInputField";
+import FloatingPasswordInputField from "../../components/my-ui/FloatingPasswordInputField";
 import { useLocation } from "react-router-dom";
 
 export const Login = () => {
@@ -91,9 +92,8 @@ export const Login = () => {
               </Field.Root>
 
               <Field.Root invalid={!!error}>
-                <FloatingLabelInput
+                <FloatingPasswordInputField
                   label="Password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />

@@ -18,6 +18,7 @@ export const AppNavbar = () => {
           : []),
         { label: "Campaign", path: "/campaign" },
         { label: "Reports", path: "/reports" },
+        { label: "Appointments", path: "/appointments" },
       ]
     : [];
 
